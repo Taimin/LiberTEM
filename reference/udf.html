@@ -1,0 +1,1470 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UDF API reference &#8212; LiberTEM 0.6.0.dev0 documentation</title>
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/language_data.js"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/x-mathjax-config">MathJax.Hub.Config({"tex2jax": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true, "ignoreClass": "document", "processClass": "math|output_area"}})</script>
+    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Data Set API" href="dataset.html" />
+    <link rel="prev" title="LiberTEM Context API" href="api.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="udf-api-reference">
+<span id="udf-reference"></span><h1>UDF API reference<a class="headerlink" href="#udf-api-reference" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="defining-udfs">
+<span id="define-udf-ref"></span><h2>Defining UDFs<a class="headerlink" href="#defining-udfs" title="Permalink to this headline">¶</a></h2>
+<p>See <a class="reference internal" href="../udf.html#user-defined-functions"><span class="std std-ref">User-defined functions</span></a> for an introduction and in-depth explanation.</p>
+<span class="target" id="module-libertem.udf.base"></span><dl class="py class">
+<dt id="libertem.udf.base.Task">
+<em class="property">class </em><code class="sig-prename descclassname">libertem.udf.base.</code><code class="sig-name descname">Task</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">partition</span></em>, <em class="sig-param"><span class="n">idx</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/libertem/udf/base.html#Task"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#libertem.udf.base.Task" title="Permalink to this definition">¶</a></dt>
+<dd><p>A computation on a partition. Inherit from this class and implement <code class="docutils literal notranslate"><span class="pre">__call__</span></code>
+for your specific computation.</p>
+<div class="versionchanged">
+<p><span class="versionmodified changed">Changed in version 0.4.0: </span>Moved from libertem.job.base to libertem.udf.base as part of Job API deprecation</p>
+</div>
+<dl class="py method">
+<dt id="libertem.udf.base.Task.__init__">
+<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">partition</span></em>, <em class="sig-param"><span class="n">idx</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/libertem/udf/base.html#Task.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#libertem.udf.base.Task.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize self.  See help(type(self)) for accurate signature.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="libertem.udf.base.Task.get_resources">
+<code class="sig-name descname">get_resources</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/libertem/udf/base.html#Task.get_resources"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#libertem.udf.base.Task.get_resources" title="Permalink to this definition">¶</a></dt>
+<dd><p>Specify the resources that a Task will use.</p>
+<p>The resources are designed to work with resource tags in Dask clusters:
+See <a class="reference external" href="https://distributed.dask.org/en/latest/resources.html">https://distributed.dask.org/en/latest/resources.html</a></p>
+<p>The resources allow scheduling of CPU-only compute, CUDA-only compute,
+(CPU or CUDA) hybrid compute, and service tasks in such a way that all
+resources are used without oversubscription. Furthermore, they
+distinguish if the given resource can be accessed with a transparent
+NumPy ndarray interface – namely if CuPy is installed to access CUDA
+resources.</p>
+<p>Each CPU worker gets one CPU, one compute and one ndarray resource
+assigned. Each CUDA worker gets one CUDA and one compute resource
+assigned. If CuPy is installed, it additionally gets an ndarray resource
+assigned. A service worker doesn’t get any resources assigned.</p>
+<p>A CPU-only task consumes one CPU, one ndarray and one compute resource,
+i.e. it will be scheduled only on CPU workers. A CUDA-only task consumes
+one CUDA, one compute and possibly an ndarray resource, i.e. it will
+only be scheduled on CUDA workers. A hybrid task that can run on both
+CPU or CUDA using a transparent ndarray interface only consumes a
+compute and an ndarray resource, i.e. it can be scheduled on CPU workers
+or CUDA workers with CuPy. A service task doesn’t request any resources
+and can therefore run on CPU, CUDA and service workers.</p>
+<p>Which device a hybrid task uses is only decided at runtime by the
+environment variables that are set on each worker process.</p>
+<p>That way, CPU-only and CUDA-only tasks can run in parallel without
+oversubscription, and hybrid tasks use whatever compute workers are free
+at the time. Furthermore, it allows using CUDA without installing CuPy.
+See <a class="reference external" href="https://github.com/LiberTEM/LiberTEM/pull/760">https://github.com/LiberTEM/LiberTEM/pull/760</a> for detailed
+discussion.</p>
+<p>Compute tasks will not run on service workers, so that these can serve
+shorter service tasks with lower latency.</p>
+<p>At the moment, workers only get a single “item” of each resource
+assigned since we run one process per CPU. Requesting more of a resource
+than any of the workers has causes a <a class="reference external" href="https://docs.python.org/3.7/library/exceptions.html#RuntimeError" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">RuntimeError</span></code></a>, including
+requesting a resource that is not available at all.</p>
+<p>For that reason one has to make sure that the workers are set up with
+the correct resources and matching environment.
+<a class="reference internal" href="internals.html#libertem.utils.devices.detect" title="libertem.utils.devices.detect"><code class="xref py py-meth docutils literal notranslate"><span class="pre">libertem.utils.devices.detect()</span></code></a>,
+<code class="xref py py-meth docutils literal notranslate"><span class="pre">libertem.executor.dask.cluster_spec()</span></code> and
+<code class="xref py py-meth docutils literal notranslate"><span class="pre">libertem.executor.dask.DaskJobExecutor.make_local()</span></code> can be used to
+set up a local cluster correctly.</p>
+<div class="versionadded">
+<p><span class="versionmodified added">New in version 0.6.0.</span></p>
+</div>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="libertem.udf.base.UDF">
+<em class="property">class </em><code class="sig-prename descclassname">libertem.udf.base.</code><code class="sig-name descname">UDF</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/libertem/udf/base.html#UDF"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#libertem.udf.base.UDF" title="Permalink to this definition">¶</a></dt>
+<dd><p>The main user-defined functions interface. You can implement your functionality
+by overriding methods on this class.</p>
+<dl class="py attribute">
+<dt id="libertem.udf.base.UDF.USE_NATIVE_DTYPE">
+<code class="sig-name descname">USE_NATIVE_DTYPE</code><a class="headerlink" href="#libertem.udf.base.UDF.USE_NATIVE_DTYPE" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">builtins.bool</span></code></p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="libertem.udf.base.UDF.__init__">
+<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/libertem/udf/base.html#UDF.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#libertem.udf.base.UDF.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a new UDF instance. If you override <cite>__init__</cite>, please take care,
+as it is called multiple times during evaluation of a UDF. You can handle
+some pre-conditioning of parameters, but you also have to accept the results
+as input again.</p>
+<p>Arguments passed as <cite>**kwargs</cite> will be automatically available on <cite>self.params</cite>
+when running the UDF.</p>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">class</span> <span class="nc">MyUDF</span><span class="p">(</span><span class="n">UDF</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">param1</span><span class="p">,</span> <span class="n">param2</span><span class="o">=</span><span class="s2">&quot;def2&quot;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="gp">... </span>        <span class="n">param1</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">param1</span><span class="p">)</span>
+<span class="gp">... </span>        <span class="k">if</span> <span class="s2">&quot;param3&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
+<span class="gp">... </span>            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;missing argument param3&quot;</span><span class="p">)</span>
+<span class="gp">... </span>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">param1</span><span class="o">=</span><span class="n">param1</span><span class="p">,</span> <span class="n">param2</span><span class="o">=</span><span class="n">param2</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>kwargs</strong> – <p>Input parameters. They are scattered to the worker processes and
+available as <cite>self.params</cite> from here on.</p>
+<p>Values can be <cite>BufferWrapper</cite> instances, which, when accessed via
+<cite>self.params.the_key_here</cite>, will automatically return a view corresponding
+to the current unit of data (frame, tile, partition).</p>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="libertem.udf.base.UDF.aux_data">
+<em class="property">classmethod </em><code class="sig-name descname">aux_data</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">data</span></em>, <em class="sig-param"><span class="n">kind</span></em>, <em class="sig-param"><span class="n">extra_shape</span><span class="o">=</span><span class="default_value">()</span></em>, <em class="sig-param"><span class="n">dtype</span><span class="o">=</span><span class="default_value">'float32'</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/libertem/udf/base.html#UDF.aux_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#libertem.udf.base.UDF.aux_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Use this method to create auxiliary data. Auxiliary data should
+have a shape like <cite>(dataset.shape.nav, extra_shape)</cite> and on access,
+an appropriate view will be created. For example, if you access
+aux data in <cite>process_frame</cite>, you will get the auxiliary data for
+the current frame you are processing.</p>
+<p class="rubric">Example</p>
+<p>We create a UDF to demonstrate the behavior:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">class</span> <span class="nc">MyUDF</span><span class="p">(</span><span class="n">UDF</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="k">def</span> <span class="nf">get_result_buffers</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="gp">... </span>        <span class="c1"># Result buffer for debug output</span>
+<span class="gp">... </span>        <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;aux_dump&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">buffer</span><span class="p">(</span><span class="n">kind</span><span class="o">=</span><span class="s1">&#39;nav&#39;</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;object&#39;</span><span class="p">)}</span>
+<span class="gp">...</span>
+<span class="gp">... </span>    <span class="k">def</span> <span class="nf">process_frame</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">frame</span><span class="p">):</span>
+<span class="gp">... </span>        <span class="c1"># Extract value of aux data for demonstration</span>
+<span class="gp">... </span>        <span class="bp">self</span><span class="o">.</span><span class="n">results</span><span class="o">.</span><span class="n">aux_dump</span><span class="p">[:]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="o">.</span><span class="n">aux_data</span><span class="p">[:])</span>
+<span class="gp">...</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># for each frame, provide three values from a sequential series:</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">aux1</span> <span class="o">=</span> <span class="n">MyUDF</span><span class="o">.</span><span class="n">aux_data</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="n">data</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">shape</span><span class="o">.</span><span class="n">nav</span><span class="p">)</span> <span class="o">*</span> <span class="mi">3</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span>
+<span class="gp">... </span>    <span class="n">kind</span><span class="o">=</span><span class="s2">&quot;nav&quot;</span><span class="p">,</span> <span class="n">extra_shape</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,),</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;float32&quot;</span>
+<span class="gp">... </span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">udf</span> <span class="o">=</span> <span class="n">MyUDF</span><span class="p">(</span><span class="n">aux_data</span><span class="o">=</span><span class="n">aux1</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">res</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">run_udf</span><span class="p">(</span><span class="n">dataset</span><span class="o">=</span><span class="n">dataset</span><span class="p">,</span> <span class="n">udf</span><span class="o">=</span><span class="n">udf</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>process_frame for frame (0, 7) received a view of aux_data with values [21., 22., 23.]:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">res</span><span class="p">[</span><span class="s1">&#39;aux_dump&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">7</span><span class="p">]</span>
+<span class="go">&#39;[21. 22. 23.]&#39;</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt id="libertem.udf.base.UDF.buffer">
+<code class="sig-name descname">buffer</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">kind</span></em>, <em class="sig-param"><span class="n">extra_shape</span><span class="o">=</span><span class="default_value">()</span></em>, <em class="sig-param"><span class="n">dtype</span><span class="o">=</span><span class="default_value">'float32'</span></em>, <em class="sig-param"><span class="n">where</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/libertem/udf/base.html#UDF.buffer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#libertem.udf.base.UDF.buffer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Use this method to create <code class="xref py py-class docutils literal notranslate"><span class="pre">BufferWrapper</span></code> objects
+in <a class="reference internal" href="#libertem.udf.base.UDF.get_result_buffers" title="libertem.udf.base.UDF.get_result_buffers"><code class="xref py py-meth docutils literal notranslate"><span class="pre">get_result_buffers()</span></code></a>.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="libertem.udf.base.UDF.copy_for_partition">
+<code class="sig-name descname">copy_for_partition</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">partition</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.19)">numpy.ndarray</a></span></em>, <em class="sig-param"><span class="n">roi</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.19)">numpy.ndarray</a></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/libertem/udf/base.html#UDF.copy_for_partition"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#libertem.udf.base.UDF.copy_for_partition" title="Permalink to this definition">¶</a></dt>
+<dd><p>create a copy of the UDF, specifically slicing aux data to the
+specified pratition and roi</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="libertem.udf.base.UDF.get_backends">
+<code class="sig-name descname">get_backends</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/libertem/udf/base.html#UDF.get_backends"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#libertem.udf.base.UDF.get_backends" title="Permalink to this definition">¶</a></dt>
+<dd><p>Signal which computation back-ends the UDF can use.</p>
+<p><code class="code docutils literal notranslate"><span class="pre">numpy</span></code> is the default CPU-based computation.</p>
+<p><code class="code docutils literal notranslate"><span class="pre">cuda</span></code> is CUDA-based computation without CuPy.</p>
+<p><code class="code docutils literal notranslate"><span class="pre">cupy</span></code> is CUDA-based computation through CuPy.</p>
+<div class="versionadded">
+<p><span class="versionmodified added">New in version 0.6.0.</span></p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><strong>backend</strong> – An iterable containing possible values <code class="code docutils literal notranslate"><span class="pre">numpy</span></code> (default), <code class="code docutils literal notranslate"><span class="pre">'cuda'</span></code> and
+<code class="code docutils literal notranslate"><span class="pre">cupy</span></code></p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>Iterable[<a class="reference external" href="https://docs.python.org/3.7/library/stdtypes.html#str" title="(in Python v3.7)">str</a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="libertem.udf.base.UDF.get_preferred_input_dtype">
+<code class="sig-name descname">get_preferred_input_dtype</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/libertem/udf/base.html#UDF.get_preferred_input_dtype"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#libertem.udf.base.UDF.get_preferred_input_dtype" title="Permalink to this definition">¶</a></dt>
+<dd><p>Override this method to specify the preferred input dtype of the UDF.</p>
+<p>The default is <code class="code docutils literal notranslate"><span class="pre">float32</span></code> since most numerical processing tasks
+perform best with this dtype, namely dot products.</p>
+<p>The back-end uses this preferred input dtype in combination with the
+dataset`s native dtype to determine the input dtype using
+<code class="xref py py-meth docutils literal notranslate"><span class="pre">numpy.result_type()</span></code>. That means <code class="code docutils literal notranslate"><span class="pre">float</span></code> data in a dataset
+switches the dtype to <code class="code docutils literal notranslate"><span class="pre">float</span></code> even if this method returns an
+<code class="code docutils literal notranslate"><span class="pre">int</span></code> dtype. <code class="code docutils literal notranslate"><span class="pre">int32</span></code> or wider input data would switch from
+<code class="code docutils literal notranslate"><span class="pre">float32</span></code> to <code class="code docutils literal notranslate"><span class="pre">float64</span></code>, and complex data in the dataset will
+switch the input dtype kind to <code class="code docutils literal notranslate"><span class="pre">complex</span></code>, following the NumPy
+casting rules.</p>
+<p>In case your UDF only works with specific input dtypes, it should throw
+an error or warning if incompatible dtypes are used, and/or implement a
+meaningful conversion in your UDF’s <code class="code docutils literal notranslate"><span class="pre">process_&lt;...&gt;</span></code> routine.</p>
+<p>If you prefer to always use the dataset’s native dtype instead of
+floats, you can override this method to return
+<a class="reference internal" href="#libertem.udf.base.UDF.USE_NATIVE_DTYPE" title="libertem.udf.base.UDF.USE_NATIVE_DTYPE"><code class="xref py py-attr docutils literal notranslate"><span class="pre">UDF.USE_NATIVE_DTYPE</span></code></a>, which is currently identical to
+<code class="code docutils literal notranslate"><span class="pre">numpy.bool</span></code> and behaves as a neutral element in
+<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.result_type.html#numpy.result_type" title="(in NumPy v1.19)"><code class="xref py py-func docutils literal notranslate"><span class="pre">numpy.result_type()</span></code></a>.</p>
+<div class="versionadded">
+<p><span class="versionmodified added">New in version 0.4.0.</span></p>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt id="libertem.udf.base.UDF.get_result_buffers">
+<code class="sig-name descname">get_result_buffers</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/libertem/udf/base.html#UDF.get_result_buffers"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#libertem.udf.base.UDF.get_result_buffers" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return result buffer declaration.</p>
+<p>Values of the returned dict should be <cite>BufferWrapper</cite>
+instances, which, when accessed via <cite>self.results.key</cite>,
+will automatically return a view corresponding to the
+current unit of data (frame, tile, partition).</p>
+<p>The values also need to be serializable via pickle.</p>
+<p>Data available in this method:</p>
+<ul class="simple">
+<li><p><cite>self.params</cite> - the parameters of this UDF</p></li>
+<li><dl class="simple">
+<dt><cite>self.meta</cite> - relevant metadata, see <a class="reference internal" href="#libertem.udf.base.UDFMeta" title="libertem.udf.base.UDFMeta"><code class="xref py py-class docutils literal notranslate"><span class="pre">UDFMeta</span></code></a> documentation.</dt><dd><p>Please note that partition metadata will not be set when this method is
+executed on the head node.</p>
+</dd>
+</dl>
+</li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Flat dict with string keys. Keys should
+be valid python identifiers, which allows
+access via <cite>self.results.the_key_here</cite>.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3.7/library/stdtypes.html#dict" title="(in Python v3.7)">dict</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="libertem.udf.base.UDF.get_task_data">
+<code class="sig-name descname">get_task_data</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/libertem/udf/base.html#UDF.get_task_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#libertem.udf.base.UDF.get_task_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize per-task data.</p>
+<p>Per-task data can be mutable. Override this function
+to allocate temporary buffers, or to initialize
+system resources.</p>
+<p>If you want to distribute static data, use
+parameters instead.</p>
+<p>Data available in this method:</p>
+<ul class="simple">
+<li><p><cite>self.params</cite> - the input parameters of this UDF</p></li>
+<li><p><cite>self.meta</cite> - relevant metadata, see <a class="reference internal" href="#libertem.udf.base.UDFMeta" title="libertem.udf.base.UDFMeta"><code class="xref py py-class docutils literal notranslate"><span class="pre">UDFMeta</span></code></a> documentation.</p></li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Flat dict with string keys. Keys should
+be valid python identifiers, which allows
+access via <cite>self.task_data.the_key_here</cite>.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3.7/library/stdtypes.html#dict" title="(in Python v3.7)">dict</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="libertem.udf.base.UDF.get_tiling_preferences">
+<code class="sig-name descname">get_tiling_preferences</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/libertem/udf/base.html#UDF.get_tiling_preferences"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#libertem.udf.base.UDF.get_tiling_preferences" title="Permalink to this definition">¶</a></dt>
+<dd><p>Configure tiling preferences. Return a dictinary with the
+following keys:</p>
+<ul class="simple">
+<li><p>“depth”: number of frames/frame parts to stack on top of each other</p></li>
+<li><p>“total_size”: total size of a tile in bytes</p></li>
+</ul>
+</dd></dl>
+
+<dl class="py method">
+<dt id="libertem.udf.base.UDF.merge">
+<code class="sig-name descname">merge</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">dest</span><span class="p">:</span> <span class="n">Dict<span class="p">[</span><a class="reference external" href="https://docs.python.org/3.7/library/stdtypes.html#str" title="(in Python v3.7)">str</a><span class="p">, </span>numpy.array<span class="p">]</span></span></em>, <em class="sig-param"><span class="n">src</span><span class="p">:</span> <span class="n">Dict<span class="p">[</span><a class="reference external" href="https://docs.python.org/3.7/library/stdtypes.html#str" title="(in Python v3.7)">str</a><span class="p">, </span>numpy.array<span class="p">]</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/libertem/udf/base.html#UDF.merge"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#libertem.udf.base.UDF.merge" title="Permalink to this definition">¶</a></dt>
+<dd><p>Merge a partial result <cite>src</cite> into the current global result <cite>dest</cite>.</p>
+<p>Data available in this method:</p>
+<ul class="simple">
+<li><p><cite>self.params</cite> - the parameters of this UDF</p></li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dest</strong> – global results; dictionary mapping the buffer name (from <cite>get_result_buffers</cite>)
+to a numpy array</p></li>
+<li><p><strong>src</strong> – results for a partition; dictionary mapping the buffer name (from <cite>get_result_buffers</cite>)
+to a numpy array</p></li>
+</ul>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>This function is running on the leader node, which means <cite>self.results</cite>
+and <cite>self.task_data</cite> are not available.</p>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt id="libertem.udf.base.UDF.requires_custom_merge">
+<em class="property">property </em><code class="sig-name descname">requires_custom_merge</code><a class="headerlink" href="#libertem.udf.base.UDF.requires_custom_merge" title="Permalink to this definition">¶</a></dt>
+<dd><p>Determine if buffers with <code class="code docutils literal notranslate"><span class="pre">kind</span> <span class="pre">!=</span> <span class="pre">'nav'</span></code> are present where
+the default merge doesn’t work</p>
+<div class="versionadded">
+<p><span class="versionmodified added">New in version 0.5.0.</span></p>
+</div>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="libertem.udf.base.UDFBase">
+<em class="property">class </em><code class="sig-prename descclassname">libertem.udf.base.</code><code class="sig-name descname">UDFBase</code><a class="reference internal" href="../_modules/libertem/udf/base.html#UDFBase"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#libertem.udf.base.UDFBase" title="Permalink to this definition">¶</a></dt>
+<dd><p>Base class for UDFs with helper functions.</p>
+<dl class="py method">
+<dt id="libertem.udf.base.UDFBase.xp">
+<em class="property">property </em><code class="sig-name descname">xp</code><a class="headerlink" href="#libertem.udf.base.UDFBase.xp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute back-end library to use.</p>
+<p>Generally, use <code class="code docutils literal notranslate"><span class="pre">self.xp</span></code> instead of :code`np` to use NumPy or CuPy transparently</p>
+<div class="versionadded">
+<p><span class="versionmodified added">New in version 0.6.0.</span></p>
+</div>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="libertem.udf.base.UDFData">
+<em class="property">class </em><code class="sig-prename descclassname">libertem.udf.base.</code><code class="sig-name descname">UDFData</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">data</span><span class="p">:</span> <span class="n">Dict<span class="p">[</span><a class="reference external" href="https://docs.python.org/3.7/library/stdtypes.html#str" title="(in Python v3.7)">str</a><span class="p">, </span><a class="reference internal" href="#libertem.common.buffers.BufferWrapper" title="libertem.common.buffers.BufferWrapper">libertem.common.buffers.BufferWrapper</a><span class="p">]</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/libertem/udf/base.html#UDFData"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#libertem.udf.base.UDFData" title="Permalink to this definition">¶</a></dt>
+<dd><p>Container for result buffers, return value from running UDFs</p>
+<dl class="py method">
+<dt id="libertem.udf.base.UDFData.__init__">
+<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">data</span><span class="p">:</span> <span class="n">Dict<span class="p">[</span><a class="reference external" href="https://docs.python.org/3.7/library/stdtypes.html#str" title="(in Python v3.7)">str</a><span class="p">, </span><a class="reference internal" href="#libertem.common.buffers.BufferWrapper" title="libertem.common.buffers.BufferWrapper">libertem.common.buffers.BufferWrapper</a><span class="p">]</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/libertem/udf/base.html#UDFData.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#libertem.udf.base.UDFData.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize self.  See help(type(self)) for accurate signature.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="libertem.udf.base.UDFData.allocate_for_part">
+<code class="sig-name descname">allocate_for_part</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">partition</span><span class="p">:</span> <span class="n"><a class="reference internal" href="internals.html#libertem.common.shape.Shape" title="libertem.common.shape.Shape">libertem.common.shape.Shape</a></span></em>, <em class="sig-param"><span class="n">roi</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.19)">numpy.ndarray</a></span></em>, <em class="sig-param"><span class="n">lib</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/libertem/udf/base.html#UDFData.allocate_for_part"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#libertem.udf.base.UDFData.allocate_for_part" title="Permalink to this definition">¶</a></dt>
+<dd><p>allocate all BufferWrapper instances in this namespace.
+for pre-allocated buffers (i.e. aux data), only set shape and roi</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="libertem.udf.base.UDFFrameMixin">
+<em class="property">class </em><code class="sig-prename descclassname">libertem.udf.base.</code><code class="sig-name descname">UDFFrameMixin</code><a class="reference internal" href="../_modules/libertem/udf/base.html#UDFFrameMixin"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#libertem.udf.base.UDFFrameMixin" title="Permalink to this definition">¶</a></dt>
+<dd><p>Implement <code class="code docutils literal notranslate"><span class="pre">process_frame</span></code> for per-frame processing.</p>
+<dl class="py method">
+<dt id="libertem.udf.base.UDFFrameMixin.process_frame">
+<code class="sig-name descname">process_frame</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">frame</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.19)">numpy.ndarray</a></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/libertem/udf/base.html#UDFFrameMixin.process_frame"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#libertem.udf.base.UDFFrameMixin.process_frame" title="Permalink to this definition">¶</a></dt>
+<dd><p>Implement this method to process the data on a frame-by-frame manner.</p>
+<p>Data available in this method:</p>
+<ul class="simple">
+<li><p><cite>self.params</cite>    - the parameters of this UDF</p></li>
+<li><p><cite>self.task_data</cite> - task data created by <cite>get_task_data</cite></p></li>
+<li><p><cite>self.results</cite>   - the result buffer instances</p></li>
+<li><p><cite>self.meta</cite>      - meta data about the current operation and data set</p></li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>frame</strong> (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.19)"><em>numpy.ndarray</em></a><em> or </em><em>cupy.ndarray</em>) – A single frame or signal element from the dataset.
+The shape is the same as <cite>dataset.shape.sig</cite>. In case of pixelated
+STEM / scanning diffraction data this is 2D, for spectra 1D etc.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="libertem.udf.base.UDFMeta">
+<em class="property">class </em><code class="sig-prename descclassname">libertem.udf.base.</code><code class="sig-name descname">UDFMeta</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">partition_shape</span><span class="p">:</span> <span class="n"><a class="reference internal" href="internals.html#libertem.common.shape.Shape" title="libertem.common.shape.Shape">libertem.common.shape.Shape</a></span></em>, <em class="sig-param"><span class="n">dataset_shape</span><span class="p">:</span> <span class="n"><a class="reference internal" href="internals.html#libertem.common.shape.Shape" title="libertem.common.shape.Shape">libertem.common.shape.Shape</a></span></em>, <em class="sig-param"><span class="n">roi</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.19)">numpy.ndarray</a></span></em>, <em class="sig-param"><span class="n">dataset_dtype</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.dtype.html#numpy.dtype" title="(in NumPy v1.19)">numpy.dtype</a></span></em>, <em class="sig-param"><span class="n">input_dtype</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.dtype.html#numpy.dtype" title="(in NumPy v1.19)">numpy.dtype</a></span></em>, <em class="sig-param"><span class="n">tiling_scheme</span><span class="p">:</span> <span class="n">libertem.io.dataset.base.tiling.TilingScheme</span> <span class="o">=</span> <span class="default_value">None</span></em>, <em class="sig-param"><span class="n">tiling_index</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)">int</a></span> <span class="o">=</span> <span class="default_value">0</span></em>, <em class="sig-param"><span class="n">corrections</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">device_class</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://docs.python.org/3.7/library/stdtypes.html#str" title="(in Python v3.7)">str</a></span> <span class="o">=</span> <span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/libertem/udf/base.html#UDFMeta"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#libertem.udf.base.UDFMeta" title="Permalink to this definition">¶</a></dt>
+<dd><p>UDF metadata. Makes all relevant metadata accessible to the UDF. Can be different
+for each task/partition.</p>
+<div class="versionchanged">
+<p><span class="versionmodified changed">Changed in version 0.4.0: </span>Added distinction of dataset_dtype and input_dtype</p>
+</div>
+<div class="versionchanged">
+<p><span class="versionmodified changed">Changed in version 0.6.0.dev0: </span>Information on compute backend added</p>
+</div>
+<dl class="py method">
+<dt id="libertem.udf.base.UDFMeta.__init__">
+<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">partition_shape</span><span class="p">:</span> <span class="n"><a class="reference internal" href="internals.html#libertem.common.shape.Shape" title="libertem.common.shape.Shape">libertem.common.shape.Shape</a></span></em>, <em class="sig-param"><span class="n">dataset_shape</span><span class="p">:</span> <span class="n"><a class="reference internal" href="internals.html#libertem.common.shape.Shape" title="libertem.common.shape.Shape">libertem.common.shape.Shape</a></span></em>, <em class="sig-param"><span class="n">roi</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.19)">numpy.ndarray</a></span></em>, <em class="sig-param"><span class="n">dataset_dtype</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.dtype.html#numpy.dtype" title="(in NumPy v1.19)">numpy.dtype</a></span></em>, <em class="sig-param"><span class="n">input_dtype</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.dtype.html#numpy.dtype" title="(in NumPy v1.19)">numpy.dtype</a></span></em>, <em class="sig-param"><span class="n">tiling_scheme</span><span class="p">:</span> <span class="n">libertem.io.dataset.base.tiling.TilingScheme</span> <span class="o">=</span> <span class="default_value">None</span></em>, <em class="sig-param"><span class="n">tiling_index</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)">int</a></span> <span class="o">=</span> <span class="default_value">0</span></em>, <em class="sig-param"><span class="n">corrections</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">device_class</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://docs.python.org/3.7/library/stdtypes.html#str" title="(in Python v3.7)">str</a></span> <span class="o">=</span> <span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/libertem/udf/base.html#UDFMeta.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#libertem.udf.base.UDFMeta.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize self.  See help(type(self)) for accurate signature.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="libertem.udf.base.UDFMeta.corrections">
+<em class="property">property </em><code class="sig-name descname">corrections</code><a class="headerlink" href="#libertem.udf.base.UDFMeta.corrections" title="Permalink to this definition">¶</a></dt>
+<dd><p>correction data that is available, either from the dataset
+or specified by the user</p>
+<div class="versionadded">
+<p><span class="versionmodified added">New in version 0.6.0.</span></p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p><a class="reference internal" href="corrections.html#libertem.corrections.corrset.CorrectionSet" title="libertem.corrections.corrset.CorrectionSet">CorrectionSet</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="libertem.udf.base.UDFMeta.dataset_dtype">
+<em class="property">property </em><code class="sig-name descname">dataset_dtype</code><a class="headerlink" href="#libertem.udf.base.UDFMeta.dataset_dtype" title="Permalink to this definition">¶</a></dt>
+<dd><p>Native dtype of the dataset</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.dtype.html#numpy.dtype" title="(in NumPy v1.19)">numpy.dtype</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="libertem.udf.base.UDFMeta.dataset_shape">
+<em class="property">property </em><code class="sig-name descname">dataset_shape</code><a class="headerlink" href="#libertem.udf.base.UDFMeta.dataset_shape" title="Permalink to this definition">¶</a></dt>
+<dd><p>The original shape of the whole dataset, not influenced by the ROI</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p><a class="reference internal" href="internals.html#libertem.common.shape.Shape" title="libertem.common.shape.Shape">Shape</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="libertem.udf.base.UDFMeta.device_class">
+<em class="property">property </em><code class="sig-name descname">device_class</code><a class="headerlink" href="#libertem.udf.base.UDFMeta.device_class" title="Permalink to this definition">¶</a></dt>
+<dd><p>Which device class is used.</p>
+<p>The back-end library can be accessed as <code class="xref py py-attr docutils literal notranslate"><span class="pre">libertem.udf.base.UDF.xp</span></code>.
+This additional string information is used since that way the back-end can be probed without
+importing them all and testing them against <code class="xref py py-attr docutils literal notranslate"><span class="pre">libertem.udf.base.UDF.xp</span></code>.</p>
+<p>Current values are <code class="code docutils literal notranslate"><span class="pre">cpu</span></code> (default) or <code class="code docutils literal notranslate"><span class="pre">cuda</span></code>.</p>
+<div class="versionadded">
+<p><span class="versionmodified added">New in version 0.6.0.</span></p>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt id="libertem.udf.base.UDFMeta.input_dtype">
+<em class="property">property </em><code class="sig-name descname">input_dtype</code><a class="headerlink" href="#libertem.udf.base.UDFMeta.input_dtype" title="Permalink to this definition">¶</a></dt>
+<dd><p>dtype of the data that will be passed to the UDF</p>
+<p>This is determined from the dataset’s native dtype and
+<a class="reference internal" href="#libertem.udf.base.UDF.get_preferred_input_dtype" title="libertem.udf.base.UDF.get_preferred_input_dtype"><code class="xref py py-meth docutils literal notranslate"><span class="pre">UDF.get_preferred_input_dtype()</span></code></a> using <code class="xref py py-meth docutils literal notranslate"><span class="pre">numpy.result_type()</span></code></p>
+<div class="versionadded">
+<p><span class="versionmodified added">New in version 0.4.0.</span></p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.dtype.html#numpy.dtype" title="(in NumPy v1.19)">numpy.dtype</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="libertem.udf.base.UDFMeta.partition_shape">
+<em class="property">property </em><code class="sig-name descname">partition_shape</code><a class="headerlink" href="#libertem.udf.base.UDFMeta.partition_shape" title="Permalink to this definition">¶</a></dt>
+<dd><p>The shape of the partition this UDF currently works on.
+If a ROI was applied, the shape will be modified accordingly.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p><a class="reference internal" href="internals.html#libertem.common.shape.Shape" title="libertem.common.shape.Shape">Shape</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="libertem.udf.base.UDFMeta.roi">
+<em class="property">property </em><code class="sig-name descname">roi</code><a class="headerlink" href="#libertem.udf.base.UDFMeta.roi" title="Permalink to this definition">¶</a></dt>
+<dd><p>Boolean array which limits the elements the UDF is working on.
+Has a shape of <code class="xref py py-attr docutils literal notranslate"><span class="pre">dataset_shape.nav</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.19)">numpy.ndarray</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="libertem.udf.base.UDFMeta.slice">
+<em class="property">property </em><code class="sig-name descname">slice</code><a class="headerlink" href="#libertem.udf.base.UDFMeta.slice" title="Permalink to this definition">¶</a></dt>
+<dd><p>A <a class="reference internal" href="internals.html#libertem.common.slice.Slice" title="libertem.common.slice.Slice"><code class="xref py py-class docutils literal notranslate"><span class="pre">Slice</span></code></a> instance that describes the location
+within the dataset with navigation dimension flattened and reduced to the ROI.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p><a class="reference internal" href="internals.html#libertem.common.slice.Slice" title="libertem.common.slice.Slice">Slice</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="libertem.udf.base.UDFMeta.tiling_scheme">
+<em class="property">property </em><code class="sig-name descname">tiling_scheme</code><a class="headerlink" href="#libertem.udf.base.UDFMeta.tiling_scheme" title="Permalink to this definition">¶</a></dt>
+<dd><p>the tiling scheme that was negotiated</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p><a class="reference internal" href="dataset.html#libertem.io.dataset.base.TilingScheme" title="libertem.io.dataset.base.TilingScheme">TilingScheme</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="libertem.udf.base.UDFPartitionMixin">
+<em class="property">class </em><code class="sig-prename descclassname">libertem.udf.base.</code><code class="sig-name descname">UDFPartitionMixin</code><a class="reference internal" href="../_modules/libertem/udf/base.html#UDFPartitionMixin"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#libertem.udf.base.UDFPartitionMixin" title="Permalink to this definition">¶</a></dt>
+<dd><p>Implement <code class="code docutils literal notranslate"><span class="pre">process_partition</span></code> for per-partition processing.</p>
+<dl class="py method">
+<dt id="libertem.udf.base.UDFPartitionMixin.process_partition">
+<code class="sig-name descname">process_partition</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">partition</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.19)">numpy.ndarray</a></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/libertem/udf/base.html#UDFPartitionMixin.process_partition"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#libertem.udf.base.UDFPartitionMixin.process_partition" title="Permalink to this definition">¶</a></dt>
+<dd><p>Implement this method to process the data partitioned into large
+(100s of MiB) partitions.</p>
+<p>Data available in this method:</p>
+<ul class="simple">
+<li><p><cite>self.params</cite>    - the parameters of this UDF</p></li>
+<li><p><cite>self.task_data</cite> - task data created by <cite>get_task_data</cite></p></li>
+<li><p><cite>self.results</cite>   - the result buffer instances</p></li>
+<li><p><cite>self.meta</cite>      - meta data about the current operation and data set</p></li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Only use this method if you know what you are doing; especially if
+you are running a processing pipeline with multiple steps, or multiple
+processing pipelines at the same time, performance may be adversely
+impacted.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>partition</strong> (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.19)"><em>numpy.ndarray</em></a><em> or </em><em>cupy.ndarray</em>) – A large number N of frames or signal elements from the dataset.
+The shape is (N,) + <cite>dataset.shape.sig</cite>. In case of pixelated
+STEM / scanning diffraction data this is 3D, for spectra 2D etc.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="libertem.udf.base.UDFPostprocessMixin">
+<em class="property">class </em><code class="sig-prename descclassname">libertem.udf.base.</code><code class="sig-name descname">UDFPostprocessMixin</code><a class="reference internal" href="../_modules/libertem/udf/base.html#UDFPostprocessMixin"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#libertem.udf.base.UDFPostprocessMixin" title="Permalink to this definition">¶</a></dt>
+<dd><p>Implement <code class="code docutils literal notranslate"><span class="pre">postprocess</span></code> to modify the resulf buffers of a partition on the worker
+after the partition data has been completely processed, but before it is returned to the
+master node for the final merging step.</p>
+<dl class="py method">
+<dt id="libertem.udf.base.UDFPostprocessMixin.postprocess">
+<code class="sig-name descname">postprocess</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/libertem/udf/base.html#UDFPostprocessMixin.postprocess"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#libertem.udf.base.UDFPostprocessMixin.postprocess" title="Permalink to this definition">¶</a></dt>
+<dd><p>Implement this method to postprocess the result data for a partition.</p>
+<p>This can be useful in combination with process_tile() to implement
+a postprocessing step that requires the reduced results for whole frames.</p>
+<p>Data available in this method:</p>
+<ul class="simple">
+<li><p><cite>self.params</cite>    - the parameters of this UDF</p></li>
+<li><p><cite>self.task_data</cite> - task data created by <cite>get_task_data</cite></p></li>
+<li><p><cite>self.results</cite>   - the result buffer instances</p></li>
+</ul>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="libertem.udf.base.UDFPreprocessMixin">
+<em class="property">class </em><code class="sig-prename descclassname">libertem.udf.base.</code><code class="sig-name descname">UDFPreprocessMixin</code><a class="reference internal" href="../_modules/libertem/udf/base.html#UDFPreprocessMixin"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#libertem.udf.base.UDFPreprocessMixin" title="Permalink to this definition">¶</a></dt>
+<dd><p>Implement <code class="code docutils literal notranslate"><span class="pre">preprocess</span></code> to initialize the result buffers of a partition on the worker
+before the partition data is processed.</p>
+<div class="versionadded">
+<p><span class="versionmodified added">New in version 0.3.0.</span></p>
+</div>
+<dl class="py method">
+<dt id="libertem.udf.base.UDFPreprocessMixin.preprocess">
+<code class="sig-name descname">preprocess</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/libertem/udf/base.html#UDFPreprocessMixin.preprocess"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#libertem.udf.base.UDFPreprocessMixin.preprocess" title="Permalink to this definition">¶</a></dt>
+<dd><p>Implement this method to preprocess the result data for a partition.</p>
+<p>This can be useful to initialize arrays of
+<code class="code docutils literal notranslate"><span class="pre">dtype='object'</span></code> with the correct container types, for example.</p>
+<p>Data available in this method:</p>
+<ul class="simple">
+<li><p><cite>self.params</cite>    - the parameters of this UDF</p></li>
+<li><p><cite>self.task_data</cite> - task data created by <cite>get_task_data</cite></p></li>
+<li><p><cite>self.results</cite>   - the result buffer instances</p></li>
+</ul>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="libertem.udf.base.UDFTileMixin">
+<em class="property">class </em><code class="sig-prename descclassname">libertem.udf.base.</code><code class="sig-name descname">UDFTileMixin</code><a class="reference internal" href="../_modules/libertem/udf/base.html#UDFTileMixin"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#libertem.udf.base.UDFTileMixin" title="Permalink to this definition">¶</a></dt>
+<dd><p>Implement <code class="code docutils literal notranslate"><span class="pre">process_tile</span></code> for per-tile processing.</p>
+<dl class="py method">
+<dt id="libertem.udf.base.UDFTileMixin.process_tile">
+<code class="sig-name descname">process_tile</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">tile</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.19)">numpy.ndarray</a></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/libertem/udf/base.html#UDFTileMixin.process_tile"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#libertem.udf.base.UDFTileMixin.process_tile" title="Permalink to this definition">¶</a></dt>
+<dd><p>Implement this method to process the data in a tiled manner.</p>
+<p>Data available in this method:</p>
+<ul class="simple">
+<li><p><cite>self.params</cite>    - the parameters of this UDF</p></li>
+<li><p><cite>self.task_data</cite> - task data created by <cite>get_task_data</cite></p></li>
+<li><p><cite>self.results</cite>   - the result buffer instances</p></li>
+<li><p><cite>self.meta</cite>      - meta data about the current operation and data set</p></li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>tile</strong> (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.19)"><em>numpy.ndarray</em></a><em> or </em><em>cupy.ndarray</em>) – A small number N of frames or signal elements from the dataset.
+The shape is (N,) + <cite>dataset.shape.sig</cite>. In case of pixelated
+STEM / scanning diffraction data this is 3D, for spectra 2D etc.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="running-udfs">
+<span id="run-udf-ref"></span><h2>Running UDFs<a class="headerlink" href="#running-udfs" title="Permalink to this headline">¶</a></h2>
+<p>Two methods of <a class="reference internal" href="api.html#libertem.api.Context" title="libertem.api.Context"><code class="xref py py-class docutils literal notranslate"><span class="pre">libertem.api.Context</span></code></a> are relevant for running user-defined functions:</p>
+<dl class="py class">
+<dt>
+<em class="property">class </em><code class="sig-prename descclassname">libertem.api.</code><code class="sig-name descname">Context</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">executor</span><span class="p">:</span> <span class="n">libertem.executor.base.JobExecutor</span> <span class="o">=</span> <span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/libertem/api.html#Context"><span class="viewcode-link">[source]</span></a></dt>
+<dd><p>Context is the main entry point of the LiberTEM API. It contains
+methods for loading datasets, creating analyses on them and running
+them.</p>
+<dl class="py method">
+<dt>
+<code class="sig-name descname">map</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">dataset</span><span class="p">:</span> <span class="n">libertem.io.dataset.base.dataset.DataSet</span></em>, <em class="sig-param"><span class="n">f</span></em>, <em class="sig-param"><span class="n">roi</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.19)">numpy.ndarray</a></span> <span class="o">=</span> <span class="default_value">None</span></em>, <em class="sig-param"><span class="n">progress</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://docs.python.org/3.7/library/functions.html#bool" title="(in Python v3.7)">bool</a></span> <span class="o">=</span> <span class="default_value">False</span></em><span class="sig-paren">)</span> &#x2192; <a class="reference internal" href="#libertem.common.buffers.BufferWrapper" title="libertem.common.buffers.BufferWrapper">libertem.common.buffers.BufferWrapper</a><a class="reference internal" href="../_modules/libertem/api.html#Context.map"><span class="viewcode-link">[source]</span></a></dt>
+<dd><p>Create an <code class="xref py py-class docutils literal notranslate"><span class="pre">AutoUDF</span></code> with function <code class="xref py py-meth docutils literal notranslate"><span class="pre">f()</span></code> and run it on <code class="code docutils literal notranslate"><span class="pre">dataset</span></code></p>
+<div class="versionchanged">
+<p><span class="versionmodified changed">Changed in version 0.5.0: </span>Added the <code class="code docutils literal notranslate"><span class="pre">progress</span></code> parameter</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dataset</strong> – The dataset to work on</p></li>
+<li><p><strong>f</strong> – Function that accepts a frame as the only parameter. It should return a strongly
+reduced output compared to the size of a frame.</p></li>
+<li><p><strong>roi</strong> (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.19)"><em>numpy.ndarray</em></a>) – region of interest as bool mask over the navigation axes of the dataset</p></li>
+<li><p><strong>progress</strong> (<a class="reference external" href="https://docs.python.org/3.7/library/functions.html#bool" title="(in Python v3.7)"><em>bool</em></a>) – Show progress bar</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>BufferWrapper</strong> – The result of the UDF. Access the underlying numpy array using the
+<a class="reference internal" href="#libertem.common.buffers.BufferWrapper.data" title="libertem.common.buffers.BufferWrapper.data"><code class="xref py py-attr docutils literal notranslate"><span class="pre">data</span></code></a> property.
+Shape and dtype is inferred automatically from <code class="code docutils literal notranslate"><span class="pre">f</span></code>.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference internal" href="#libertem.common.buffers.BufferWrapper" title="libertem.common.buffers.BufferWrapper">libertem.common.buffers.BufferWrapper</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt>
+<code class="sig-name descname">run_udf</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">dataset</span><span class="p">:</span> <span class="n">libertem.io.dataset.base.dataset.DataSet</span></em>, <em class="sig-param"><span class="n">udf</span><span class="p">:</span> <span class="n"><a class="reference internal" href="#libertem.udf.base.UDF" title="libertem.udf.base.UDF">libertem.udf.base.UDF</a></span></em>, <em class="sig-param"><span class="n">roi</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.19)">numpy.ndarray</a></span> <span class="o">=</span> <span class="default_value">None</span></em>, <em class="sig-param"><span class="n">corrections</span><span class="p">:</span> <span class="n"><a class="reference internal" href="corrections.html#libertem.corrections.corrset.CorrectionSet" title="libertem.corrections.corrset.CorrectionSet">libertem.corrections.corrset.CorrectionSet</a></span> <span class="o">=</span> <span class="default_value">None</span></em>, <em class="sig-param"><span class="n">progress</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://docs.python.org/3.7/library/functions.html#bool" title="(in Python v3.7)">bool</a></span> <span class="o">=</span> <span class="default_value">False</span></em>, <em class="sig-param"><span class="n">backends</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span> &#x2192; Dict<span class="p">[</span><a class="reference external" href="https://docs.python.org/3.7/library/stdtypes.html#str" title="(in Python v3.7)">str</a><span class="p">, </span><a class="reference internal" href="#libertem.common.buffers.BufferWrapper" title="libertem.common.buffers.BufferWrapper">libertem.common.buffers.BufferWrapper</a><span class="p">]</span><a class="reference internal" href="../_modules/libertem/api.html#Context.run_udf"><span class="viewcode-link">[source]</span></a></dt>
+<dd><p>Run <code class="code docutils literal notranslate"><span class="pre">udf</span></code> on <code class="code docutils literal notranslate"><span class="pre">dataset</span></code>, restricted to the region of interest <code class="code docutils literal notranslate"><span class="pre">roi</span></code>.</p>
+<div class="versionchanged">
+<p><span class="versionmodified changed">Changed in version 0.5.0: </span>Added the <code class="code docutils literal notranslate"><span class="pre">progress</span></code> parameter</p>
+</div>
+<div class="versionchanged">
+<p><span class="versionmodified changed">Changed in version 0.6.0: </span>Added the <code class="code docutils literal notranslate"><span class="pre">corrections</span></code> and <code class="code docutils literal notranslate"><span class="pre">backends</span></code> parameter</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dataset</strong> – The dataset to work on</p></li>
+<li><p><strong>udf</strong> – UDF instance you want to run</p></li>
+<li><p><strong>roi</strong> (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.19)"><em>numpy.ndarray</em></a>) – Region of interest as bool mask over the navigation axes of the dataset</p></li>
+<li><p><strong>progress</strong> (<a class="reference external" href="https://docs.python.org/3.7/library/functions.html#bool" title="(in Python v3.7)"><em>bool</em></a>) – Show progress bar</p></li>
+<li><p><strong>corrections</strong> – Corrections to apply while running the UDF. If none are given,
+the corrections that are part of the <code class="code docutils literal notranslate"><span class="pre">DataSet</span></code> are used,
+if there are any.</p></li>
+<li><p><strong>backends</strong> (<a class="reference external" href="https://docs.python.org/3.7/library/constants.html#None" title="(in Python v3.7)"><em>None</em></a><em> or </em><em>iterable containing 'numpy'</em><em>, </em><em>'cupy' and/or 'cuda'</em>) – Restrict the back-end to a subset of the capabilities of the UDF.
+This can be useful for testing hybrid UDFs.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Return value of the UDF containing the result buffers of
+type <a class="reference internal" href="#libertem.common.buffers.BufferWrapper" title="libertem.common.buffers.BufferWrapper"><code class="xref py py-class docutils literal notranslate"><span class="pre">libertem.common.buffers.BufferWrapper</span></code></a>. Note that a
+<a class="reference internal" href="#libertem.common.buffers.BufferWrapper" title="libertem.common.buffers.BufferWrapper"><code class="xref py py-class docutils literal notranslate"><span class="pre">BufferWrapper</span></code></a> can be used like
+a <a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.19)"><code class="xref py py-class docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a> in many cases because it implements
+<code class="xref py py-meth docutils literal notranslate"><span class="pre">__array__()</span></code>. You can access the underlying numpy array using the
+<a class="reference internal" href="#libertem.common.buffers.BufferWrapper.data" title="libertem.common.buffers.BufferWrapper.data"><code class="xref py py-attr docutils literal notranslate"><span class="pre">data</span></code></a> property.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3.7/library/stdtypes.html#dict" title="(in Python v3.7)">dict</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="buffers">
+<span id="buffer-udf-ref"></span><h2>Buffers<a class="headerlink" href="#buffers" title="Permalink to this headline">¶</a></h2>
+<p><a class="reference internal" href="#libertem.common.buffers.BufferWrapper" title="libertem.common.buffers.BufferWrapper"><code class="xref py py-class docutils literal notranslate"><span class="pre">BufferWrapper</span></code></a> objects are used to manage data in the context of user-defined functions.</p>
+<span class="target" id="module-libertem.common.buffers"></span><dl class="py class">
+<dt id="libertem.common.buffers.AuxBufferWrapper">
+<em class="property">class </em><code class="sig-prename descclassname">libertem.common.buffers.</code><code class="sig-name descname">AuxBufferWrapper</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">kind</span></em>, <em class="sig-param"><span class="n">extra_shape</span><span class="o">=</span><span class="default_value">()</span></em>, <em class="sig-param"><span class="n">dtype</span><span class="o">=</span><span class="default_value">'float32'</span></em>, <em class="sig-param"><span class="n">where</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/libertem/common/buffers.html#AuxBufferWrapper"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#libertem.common.buffers.AuxBufferWrapper" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="py method">
+<dt id="libertem.common.buffers.AuxBufferWrapper.get_view_for_dataset">
+<code class="sig-name descname">get_view_for_dataset</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">dataset</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/libertem/common/buffers.html#AuxBufferWrapper.get_view_for_dataset"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#libertem.common.buffers.AuxBufferWrapper.get_view_for_dataset" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="libertem.common.buffers.AuxBufferWrapper.new_for_partition">
+<code class="sig-name descname">new_for_partition</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">partition</span></em>, <em class="sig-param"><span class="n">roi</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/libertem/common/buffers.html#AuxBufferWrapper.new_for_partition"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#libertem.common.buffers.AuxBufferWrapper.new_for_partition" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a new AuxBufferWrapper for a specific partition,
+slicing the data accordingly and reducing it to the selected roi.</p>
+<p>This assumes to be called on an AuxBufferWrapper that was not created
+by this method, that is, it should have global coordinates without
+having the ROI applied.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="libertem.common.buffers.AuxBufferWrapper.set_buffer">
+<code class="sig-name descname">set_buffer</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">buf</span></em>, <em class="sig-param"><span class="n">is_global</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/libertem/common/buffers.html#AuxBufferWrapper.set_buffer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#libertem.common.buffers.AuxBufferWrapper.set_buffer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set the underlying buffer to an existing numpy array.</p>
+<p>If is_global is True, the shape must match with the shape of nav or sig
+of the dataset, plus extra_shape, as determined by the <cite>kind</cite> and
+<cite>extra_shape</cite> constructor arguments.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="libertem.common.buffers.BufferPool">
+<em class="property">class </em><code class="sig-prename descclassname">libertem.common.buffers.</code><code class="sig-name descname">BufferPool</code><a class="reference internal" href="../_modules/libertem/common/buffers.html#BufferPool"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#libertem.common.buffers.BufferPool" title="Permalink to this definition">¶</a></dt>
+<dd><p>allocation pool for explicitly re-using (aligned) allocations</p>
+<dl class="py method">
+<dt id="libertem.common.buffers.BufferPool.__init__">
+<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/libertem/common/buffers.html#BufferPool.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#libertem.common.buffers.BufferPool.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize self.  See help(type(self)) for accurate signature.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="libertem.common.buffers.BufferPool.bytes">
+<code class="sig-name descname">bytes</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">size</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/libertem/common/buffers.html#BufferPool.bytes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#libertem.common.buffers.BufferPool.bytes" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="libertem.common.buffers.BufferPool.empty">
+<code class="sig-name descname">empty</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">size</span></em>, <em class="sig-param"><span class="n">dtype</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/libertem/common/buffers.html#BufferPool.empty"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#libertem.common.buffers.BufferPool.empty" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="libertem.common.buffers.BufferPool.zeros">
+<code class="sig-name descname">zeros</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">size</span></em>, <em class="sig-param"><span class="n">dtype</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/libertem/common/buffers.html#BufferPool.zeros"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#libertem.common.buffers.BufferPool.zeros" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="libertem.common.buffers.BufferWrapper">
+<em class="property">class </em><code class="sig-prename descclassname">libertem.common.buffers.</code><code class="sig-name descname">BufferWrapper</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">kind</span></em>, <em class="sig-param"><span class="n">extra_shape</span><span class="o">=</span><span class="default_value">()</span></em>, <em class="sig-param"><span class="n">dtype</span><span class="o">=</span><span class="default_value">'float32'</span></em>, <em class="sig-param"><span class="n">where</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/libertem/common/buffers.html#BufferWrapper"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#libertem.common.buffers.BufferWrapper" title="Permalink to this definition">¶</a></dt>
+<dd><p>Helper class to automatically allocate buffers, either for partitions or
+the whole dataset, and create views for partitions or single frames.</p>
+<p>This is used as a helper to allow easy merging of results without needing
+to manually handle indexing.</p>
+<p>Usually, as a user, you only need to instantiate this class, specifying <cite>kind</cite>,
+<cite>dtype</cite> and sometimes <cite>extra_shape</cite> parameters. Most methods are meant to be called
+from LiberTEM-internal code, for example the UDF functionality.</p>
+<p>This class is array_like, so you can directly use it, for example, as argument
+for numpy functions.</p>
+<dl class="py method">
+<dt id="libertem.common.buffers.BufferWrapper.__init__">
+<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">kind</span></em>, <em class="sig-param"><span class="n">extra_shape</span><span class="o">=</span><span class="default_value">()</span></em>, <em class="sig-param"><span class="n">dtype</span><span class="o">=</span><span class="default_value">'float32'</span></em>, <em class="sig-param"><span class="n">where</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/libertem/common/buffers.html#BufferWrapper.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#libertem.common.buffers.BufferWrapper.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><div class="versionchanged">
+<p><span class="versionmodified changed">Changed in version 0.6.0: </span>Add option to specify backend, for example CuPy</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>kind</strong> (<em>&quot;nav&quot;</em><em>, </em><em>&quot;sig&quot;</em><em> or </em><em>&quot;single&quot;</em>) – The abstract shape of the buffer, corresponding either to the navigation
+or the signal dimensions of the dataset, or a single value.</p></li>
+<li><p><strong>extra_shape</strong> (<em>optional</em><em>, </em><em>tuple of int</em><em> or </em><em>a Shape object</em>) – You can specify additional dimensions for your data. For example, if
+you want to store 2D coords, you would specify (2,) here.
+For a Shape object, sig_dims is discarded and the entire shape is used.</p></li>
+<li><p><strong>dtype</strong> (<em>string</em><em> or </em><em>numpy dtype</em>) – The dtype of this buffer</p></li>
+<li><p><strong>where</strong> (<em>string</em><em> or </em><a class="reference external" href="https://docs.python.org/3.7/library/constants.html#None" title="(in Python v3.7)"><em>None</em></a>) – <code class="code docutils literal notranslate"><span class="pre">None</span></code> means NumPy array, <code class="code docutils literal notranslate"><span class="pre">device</span></code> to use a back-end specified
+in <a class="reference internal" href="#libertem.common.buffers.BufferWrapper.allocate" title="libertem.common.buffers.BufferWrapper.allocate"><code class="xref py py-meth docutils literal notranslate"><span class="pre">allocate()</span></code></a>. New in 0.6.0.dev0</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="libertem.common.buffers.BufferWrapper.allocate">
+<code class="sig-name descname">allocate</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">lib</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/libertem/common/buffers.html#BufferWrapper.allocate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#libertem.common.buffers.BufferWrapper.allocate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Allocate a new buffer, in the shape previously set
+via one of the <cite>set_shape_*</cite> methods.</p>
+<div class="versionchanged">
+<p><span class="versionmodified changed">Changed in version 0.6.0.dev0: </span>Support for allocating on device</p>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt id="libertem.common.buffers.BufferWrapper.data">
+<em class="property">property </em><code class="sig-name descname">data</code><a class="headerlink" href="#libertem.common.buffers.BufferWrapper.data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the buffer contents in shape that corresponds to the
+original dataset shape. If a ROI is set, embed the result into a new
+array; unset values have nan value, if supported by the underlying dtype.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="libertem.common.buffers.BufferWrapper.export">
+<code class="sig-name descname">export</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/libertem/common/buffers.html#BufferWrapper.export"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#libertem.common.buffers.BufferWrapper.export" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert device array to NumPy array for pickling and merging</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="libertem.common.buffers.BufferWrapper.extra_shape">
+<em class="property">property </em><code class="sig-name descname">extra_shape</code><a class="headerlink" href="#libertem.common.buffers.BufferWrapper.extra_shape" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the <code class="code docutils literal notranslate"><span class="pre">extra_shape</span></code> of this buffer.</p>
+<div class="versionadded">
+<p><span class="versionmodified added">New in version 0.5.0.</span></p>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt id="libertem.common.buffers.BufferWrapper.flush">
+<code class="sig-name descname">flush</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">debug</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/libertem/common/buffers.html#BufferWrapper.flush"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#libertem.common.buffers.BufferWrapper.flush" title="Permalink to this definition">¶</a></dt>
+<dd><p>Write back any cached contiguous copies</p>
+<div class="versionadded">
+<p><span class="versionmodified added">New in version 0.5.0.</span></p>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt id="libertem.common.buffers.BufferWrapper.get_contiguous_view_for_tile">
+<code class="sig-name descname">get_contiguous_view_for_tile</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">partition</span></em>, <em class="sig-param"><span class="n">tile</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/libertem/common/buffers.html#BufferWrapper.get_contiguous_view_for_tile"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#libertem.common.buffers.BufferWrapper.get_contiguous_view_for_tile" title="Permalink to this definition">¶</a></dt>
+<dd><p>Make a cached contiguous copy of the view for a single tile
+if necessary.</p>
+<p>Currently this is only necessary for <code class="code docutils literal notranslate"><span class="pre">kind=&quot;sig&quot;</span></code> buffers.
+Use <a class="reference internal" href="#libertem.common.buffers.BufferWrapper.flush" title="libertem.common.buffers.BufferWrapper.flush"><code class="xref py py-meth docutils literal notranslate"><span class="pre">flush()</span></code></a> to write back the cache.</p>
+<p>Boundary condition: <code class="code docutils literal notranslate"><span class="pre">tile.tile_slice.get(sig_only=True)</span></code>
+does not overlap for different tiles while the cache is active,
+i.e. the tiles follow LiberTEM slicing for
+<code class="xref py py-meth docutils literal notranslate"><span class="pre">libertem.udf.base.UDFTileMixing.process_tile()</span></code>.</p>
+<div class="versionadded">
+<p><span class="versionmodified added">New in version 0.5.0.</span></p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><strong>view</strong> – View into data or contiguous copy if necessary</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>np.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="libertem.common.buffers.BufferWrapper.get_view_for_dataset">
+<code class="sig-name descname">get_view_for_dataset</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">dataset</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/libertem/common/buffers.html#BufferWrapper.get_view_for_dataset"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#libertem.common.buffers.BufferWrapper.get_view_for_dataset" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="libertem.common.buffers.BufferWrapper.get_view_for_frame">
+<code class="sig-name descname">get_view_for_frame</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">partition</span></em>, <em class="sig-param"><span class="n">tile</span></em>, <em class="sig-param"><span class="n">frame_idx</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/libertem/common/buffers.html#BufferWrapper.get_view_for_frame"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#libertem.common.buffers.BufferWrapper.get_view_for_frame" title="Permalink to this definition">¶</a></dt>
+<dd><p>get a view for a single frame in a partition- or dataset-sized buffer
+(partition-sized here means the reduced result for a whole partition,
+not the partition itself!)</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="libertem.common.buffers.BufferWrapper.get_view_for_partition">
+<code class="sig-name descname">get_view_for_partition</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">partition</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/libertem/common/buffers.html#BufferWrapper.get_view_for_partition"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#libertem.common.buffers.BufferWrapper.get_view_for_partition" title="Permalink to this definition">¶</a></dt>
+<dd><p>get a view for a single partition in a whole-result-sized buffer</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="libertem.common.buffers.BufferWrapper.get_view_for_tile">
+<code class="sig-name descname">get_view_for_tile</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">partition</span></em>, <em class="sig-param"><span class="n">tile</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/libertem/common/buffers.html#BufferWrapper.get_view_for_tile"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#libertem.common.buffers.BufferWrapper.get_view_for_tile" title="Permalink to this definition">¶</a></dt>
+<dd><p>get a view for a single tile in a partition-sized buffer
+(partition-sized here means the reduced result for a whole partition,
+not the partition itself!)</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="libertem.common.buffers.BufferWrapper.has_data">
+<code class="sig-name descname">has_data</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/libertem/common/buffers.html#BufferWrapper.has_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#libertem.common.buffers.BufferWrapper.has_data" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="libertem.common.buffers.BufferWrapper.kind">
+<em class="property">property </em><code class="sig-name descname">kind</code><a class="headerlink" href="#libertem.common.buffers.BufferWrapper.kind" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the kind of this buffer.</p>
+<div class="versionadded">
+<p><span class="versionmodified added">New in version 0.5.0.</span></p>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt id="libertem.common.buffers.BufferWrapper.raw_data">
+<em class="property">property </em><code class="sig-name descname">raw_data</code><a class="headerlink" href="#libertem.common.buffers.BufferWrapper.raw_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the raw data underlying this buffer, which is flattened and
+may be even filtered to a ROI</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="libertem.common.buffers.BufferWrapper.roi_is_zero">
+<em class="property">property </em><code class="sig-name descname">roi_is_zero</code><a class="headerlink" href="#libertem.common.buffers.BufferWrapper.roi_is_zero" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="libertem.common.buffers.BufferWrapper.set_roi">
+<code class="sig-name descname">set_roi</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">roi</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/libertem/common/buffers.html#BufferWrapper.set_roi"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#libertem.common.buffers.BufferWrapper.set_roi" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="libertem.common.buffers.BufferWrapper.set_shape_ds">
+<code class="sig-name descname">set_shape_ds</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">dataset</span></em>, <em class="sig-param"><span class="n">roi</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/libertem/common/buffers.html#BufferWrapper.set_shape_ds"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#libertem.common.buffers.BufferWrapper.set_shape_ds" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="libertem.common.buffers.BufferWrapper.set_shape_partition">
+<code class="sig-name descname">set_shape_partition</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">partition</span></em>, <em class="sig-param"><span class="n">roi</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/libertem/common/buffers.html#BufferWrapper.set_shape_partition"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#libertem.common.buffers.BufferWrapper.set_shape_partition" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="libertem.common.buffers.BufferWrapper.where">
+<em class="property">property </em><code class="sig-name descname">where</code><a class="headerlink" href="#libertem.common.buffers.BufferWrapper.where" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the place where this buffer is to be allocated.</p>
+<div class="versionadded">
+<p><span class="versionmodified added">New in version 0.6.0.dev0.</span></p>
+</div>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt id="libertem.common.buffers.bytes_aligned">
+<code class="sig-prename descclassname">libertem.common.buffers.</code><code class="sig-name descname">bytes_aligned</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">size</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/libertem/common/buffers.html#bytes_aligned"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#libertem.common.buffers.bytes_aligned" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="libertem.common.buffers.disjoint">
+<code class="sig-prename descclassname">libertem.common.buffers.</code><code class="sig-name descname">disjoint</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">sl</span><span class="p">:</span> <span class="n"><a class="reference internal" href="internals.html#libertem.common.slice.Slice" title="libertem.common.slice.Slice">libertem.common.slice.Slice</a></span></em>, <em class="sig-param"><span class="n">slices</span><span class="p">:</span> <span class="n">Iterable<span class="p">[</span><a class="reference internal" href="internals.html#libertem.common.slice.Slice" title="libertem.common.slice.Slice">libertem.common.slice.Slice</a><span class="p">]</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/libertem/common/buffers.html#disjoint"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#libertem.common.buffers.disjoint" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="libertem.common.buffers.empty_aligned">
+<code class="sig-prename descclassname">libertem.common.buffers.</code><code class="sig-name descname">empty_aligned</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">size</span></em>, <em class="sig-param"><span class="n">dtype</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/libertem/common/buffers.html#empty_aligned"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#libertem.common.buffers.empty_aligned" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="libertem.common.buffers.reshaped_view">
+<code class="sig-prename descclassname">libertem.common.buffers.</code><code class="sig-name descname">reshaped_view</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">a</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.19)">numpy.ndarray</a></span></em>, <em class="sig-param"><span class="n">shape</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/libertem/common/buffers.html#reshaped_view"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#libertem.common.buffers.reshaped_view" title="Permalink to this definition">¶</a></dt>
+<dd><p>Like <a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.reshape.html#numpy.ndarray.reshape" title="(in NumPy v1.19)"><code class="xref py py-meth docutils literal notranslate"><span class="pre">numpy.ndarray.reshape()</span></code></a>, just guaranteed to
+return a view or throw an <a class="reference external" href="https://docs.python.org/3.7/library/exceptions.html#AttributeError" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">AttributeError</span></code></a> if
+no view can be created.</p>
+<div class="versionadded">
+<p><span class="versionmodified added">New in version 0.5.0.</span></p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>a</strong> (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.19)"><em>numpy.ndarray</em></a>) – Array to create a view of</p></li>
+<li><p><strong>shape</strong> (<a class="reference external" href="https://docs.python.org/3.7/library/stdtypes.html#tuple" title="(in Python v3.7)"><em>tuple</em></a>) – Shape of the view to create</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>view</strong> – View into <code class="code docutils literal notranslate"><span class="pre">a</span></code> with shape <code class="code docutils literal notranslate"><span class="pre">shape</span></code></p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.19)">numpy.ndarray</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="libertem.common.buffers.to_numpy">
+<code class="sig-prename descclassname">libertem.common.buffers.</code><code class="sig-name descname">to_numpy</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">a</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/libertem/common/buffers.html#to_numpy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#libertem.common.buffers.to_numpy" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="libertem.common.buffers.zeros_aligned">
+<code class="sig-prename descclassname">libertem.common.buffers.</code><code class="sig-name descname">zeros_aligned</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">size</span></em>, <em class="sig-param"><span class="n">dtype</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/libertem/common/buffers.html#zeros_aligned"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#libertem.common.buffers.zeros_aligned" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="included-utility-udfs">
+<span id="utilify-udfs"></span><h2>Included utility UDFs<a class="headerlink" href="#included-utility-udfs" title="Permalink to this headline">¶</a></h2>
+<p>Some generally useful UDFs are included with LiberTEM:</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>See <a class="reference internal" href="application.html#application-api"><span class="std std-ref">Application-specific API</span></a> for application-specific UDFs and analyses.</p>
+</div>
+<div class="section" id="sum-of-frames">
+<span id="sum-udf"></span><h3>Sum of frames<a class="headerlink" href="#sum-of-frames" title="Permalink to this headline">¶</a></h3>
+<dl class="py class">
+<dt id="libertem.udf.sum.SumUDF">
+<em class="property">class </em><code class="sig-prename descclassname">libertem.udf.sum.</code><code class="sig-name descname">SumUDF</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">dtype</span><span class="o">=</span><span class="default_value">'float32'</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/libertem/udf/sum.html#SumUDF"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#libertem.udf.sum.SumUDF" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sum up frames, preserving the signal dimension</p>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">udf</span> <span class="o">=</span> <span class="n">SumUDF</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">result</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">run_udf</span><span class="p">(</span><span class="n">dataset</span><span class="o">=</span><span class="n">dataset</span><span class="p">,</span> <span class="n">udf</span><span class="o">=</span><span class="n">udf</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="s2">&quot;intensity&quot;</span><span class="p">])</span><span class="o">.</span><span class="n">shape</span>
+<span class="go">(16, 16)</span>
+</pre></div>
+</div>
+<dl class="py method">
+<dt id="libertem.udf.sum.SumUDF.__init__">
+<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">dtype</span><span class="o">=</span><span class="default_value">'float32'</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/libertem/udf/sum.html#SumUDF.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#libertem.udf.sum.SumUDF.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>dtype</strong> (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.dtype.html#numpy.dtype" title="(in NumPy v1.19)"><em>numpy.dtype</em></a><em>, </em><em>optional</em>) – Preferred dtype for computation, default ‘float32’. The actual dtype will be determined
+from this value and the dataset’s dtype using <code class="xref py py-meth docutils literal notranslate"><span class="pre">numpy.result_type()</span></code>.
+See also <a class="reference internal" href="../udf/advanced.html#udf-dtype"><span class="std std-ref">dtype support</span></a>.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="libertem.udf.sum.SumUDF.get_preferred_input_dtype">
+<code class="sig-name descname">get_preferred_input_dtype</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/libertem/udf/sum.html#SumUDF.get_preferred_input_dtype"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#libertem.udf.sum.SumUDF.get_preferred_input_dtype" title="Permalink to this definition">¶</a></dt>
+<dd><p>Override this method to specify the preferred input dtype of the UDF.</p>
+<p>The default is <code class="code docutils literal notranslate"><span class="pre">float32</span></code> since most numerical processing tasks
+perform best with this dtype, namely dot products.</p>
+<p>The back-end uses this preferred input dtype in combination with the
+dataset`s native dtype to determine the input dtype using
+<code class="xref py py-meth docutils literal notranslate"><span class="pre">numpy.result_type()</span></code>. That means <code class="code docutils literal notranslate"><span class="pre">float</span></code> data in a dataset
+switches the dtype to <code class="code docutils literal notranslate"><span class="pre">float</span></code> even if this method returns an
+<code class="code docutils literal notranslate"><span class="pre">int</span></code> dtype. <code class="code docutils literal notranslate"><span class="pre">int32</span></code> or wider input data would switch from
+<code class="code docutils literal notranslate"><span class="pre">float32</span></code> to <code class="code docutils literal notranslate"><span class="pre">float64</span></code>, and complex data in the dataset will
+switch the input dtype kind to <code class="code docutils literal notranslate"><span class="pre">complex</span></code>, following the NumPy
+casting rules.</p>
+<p>In case your UDF only works with specific input dtypes, it should throw
+an error or warning if incompatible dtypes are used, and/or implement a
+meaningful conversion in your UDF’s <code class="code docutils literal notranslate"><span class="pre">process_&lt;...&gt;</span></code> routine.</p>
+<p>If you prefer to always use the dataset’s native dtype instead of
+floats, you can override this method to return
+<code class="xref py py-attr docutils literal notranslate"><span class="pre">UDF.USE_NATIVE_DTYPE</span></code>, which is currently identical to
+<code class="code docutils literal notranslate"><span class="pre">numpy.bool</span></code> and behaves as a neutral element in
+<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.result_type.html#numpy.result_type" title="(in NumPy v1.19)"><code class="xref py py-func docutils literal notranslate"><span class="pre">numpy.result_type()</span></code></a>.</p>
+<div class="versionadded">
+<p><span class="versionmodified added">New in version 0.4.0.</span></p>
+</div>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="sum-of-log-scaled-frames">
+<span id="logsum-udf"></span><h3>Sum of log-scaled frames<a class="headerlink" href="#sum-of-log-scaled-frames" title="Permalink to this headline">¶</a></h3>
+<dl class="py class">
+<dt id="libertem.udf.logsum.LogsumUDF">
+<em class="property">class </em><code class="sig-prename descclassname">libertem.udf.logsum.</code><code class="sig-name descname">LogsumUDF</code><a class="reference internal" href="../_modules/libertem/udf/logsum.html#LogsumUDF"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#libertem.udf.logsum.LogsumUDF" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sum up logscaled frames</p>
+<p>In comparison to log-scaling the sum, this highlights regions with slightly higher
+intensity that appear in many frames in relation to very high intensity in a few frames.</p>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">udf</span> <span class="o">=</span> <span class="n">LogsumUDF</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">result</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">run_udf</span><span class="p">(</span><span class="n">dataset</span><span class="o">=</span><span class="n">dataset</span><span class="p">,</span> <span class="n">udf</span><span class="o">=</span><span class="n">udf</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="s2">&quot;logsum&quot;</span><span class="p">])</span><span class="o">.</span><span class="n">shape</span>
+<span class="go">(16, 16)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</div>
+<div class="section" id="standard-deviation">
+<span id="stddev-udf"></span><h3>Standard deviation<a class="headerlink" href="#standard-deviation" title="Permalink to this headline">¶</a></h3>
+<dl class="py class">
+<dt id="libertem.udf.stddev.StdDevUDF">
+<em class="property">class </em><code class="sig-prename descclassname">libertem.udf.stddev.</code><code class="sig-name descname">StdDevUDF</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/libertem/udf/stddev.html#StdDevUDF"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#libertem.udf.stddev.StdDevUDF" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute sum of variances and sum of pixels from the given dataset</p>
+<p>The one-pass algorithm used in this code is taken from the following
+paper: <a class="bibtex reference internal" href="../index.html#schubert2018" id="id1">[SG18]</a>.</p>
+<dl class="simple">
+<dt>..versionchanged:: 0.5.0</dt><dd><p>Result buffers have been renamed</p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">udf</span> <span class="o">=</span> <span class="n">StdDevUDF</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">result</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">run_udf</span><span class="p">(</span><span class="n">dataset</span><span class="o">=</span><span class="n">dataset</span><span class="p">,</span> <span class="n">udf</span><span class="o">=</span><span class="n">udf</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Note: These are raw results. Use run_stddev() instead of</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># using the UDF directly to obtain</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># variance, standard deviation and mean</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="s2">&quot;varsum&quot;</span><span class="p">])</span>        <span class="c1"># variance times number of frames</span>
+<span class="go">array(...)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="s2">&quot;num_frames&quot;</span><span class="p">])</span>  <span class="c1"># number of frames for each tile</span>
+<span class="go">array(...)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="s2">&quot;sum&quot;</span><span class="p">])</span>  <span class="c1"># sum of all frames</span>
+<span class="go">array(...)</span>
+</pre></div>
+</div>
+<dl class="py method">
+<dt id="libertem.udf.stddev.StdDevUDF.get_result_buffers">
+<code class="sig-name descname">get_result_buffers</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/libertem/udf/stddev.html#StdDevUDF.get_result_buffers"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#libertem.udf.stddev.StdDevUDF.get_result_buffers" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initializes BufferWrapper objects for sum of variances,
+sum of frames, and the number of frames</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>A dictionary that maps ‘varsum’,  ‘num_frames’, ‘sum’ to
+the corresponding BufferWrapper objects</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3.7/library/stdtypes.html#dict" title="(in Python v3.7)">dict</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="libertem.udf.stddev.StdDevUDF.get_task_data">
+<code class="sig-name descname">get_task_data</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/libertem/udf/stddev.html#StdDevUDF.get_task_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#libertem.udf.stddev.StdDevUDF.get_task_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize per-task data.</p>
+<p>Per-task data can be mutable. Override this function
+to allocate temporary buffers, or to initialize
+system resources.</p>
+<p>If you want to distribute static data, use
+parameters instead.</p>
+<p>Data available in this method:</p>
+<ul class="simple">
+<li><p><cite>self.params</cite> - the input parameters of this UDF</p></li>
+<li><p><cite>self.meta</cite> - relevant metadata, see <code class="xref py py-class docutils literal notranslate"><span class="pre">UDFMeta</span></code> documentation.</p></li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Flat dict with string keys. Keys should
+be valid python identifiers, which allows
+access via <cite>self.task_data.the_key_here</cite>.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3.7/library/stdtypes.html#dict" title="(in Python v3.7)">dict</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="libertem.udf.stddev.StdDevUDF.merge">
+<code class="sig-name descname">merge</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">dest</span></em>, <em class="sig-param"><span class="n">src</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/libertem/udf/stddev.html#StdDevUDF.merge"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#libertem.udf.stddev.StdDevUDF.merge" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given destination and source buffers that contain sum of variances, sum of frames,
+and the number of frames used in each of the buffers, merge the source
+buffers into the destination buffers by computing the joint sum of variances and
+sum of frames over all frames used</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dest</strong> – Aggregation bufer that contains sum of variances, sum of frames, and the
+number of frames</p></li>
+<li><p><strong>src</strong> – Partial results that contains sum of variances, sum of frames, and the
+number of frames of a partition to be merged into the aggregation buffers</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="libertem.udf.stddev.StdDevUDF.process_tile">
+<code class="sig-name descname">process_tile</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">tile</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/libertem/udf/stddev.html#StdDevUDF.process_tile"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#libertem.udf.stddev.StdDevUDF.process_tile" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate a sum and variance minibatch for the tile and update partition buffers
+with it.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>tile</strong> – tile of the data</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt id="libertem.udf.stddev.run_stddev">
+<code class="sig-prename descclassname">libertem.udf.stddev.</code><code class="sig-name descname">run_stddev</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">ctx</span></em>, <em class="sig-param"><span class="n">dataset</span></em>, <em class="sig-param"><span class="n">roi</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">progress</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/libertem/udf/stddev.html#run_stddev"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#libertem.udf.stddev.run_stddev" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute sum of variances and sum of pixels from the given dataset</p>
+<p>One-pass algorithm used in this code is taken from the following paper:
+<a class="bibtex reference internal" href="../index.html#schubert2018" id="id2">[SG18]</a>.</p>
+<dl class="simple">
+<dt>..versionchanged:: 0.5.0</dt><dd><p>Result buffers have been renamed</p>
+</dd>
+<dt>..versionchanged:: 0.5.0</dt><dd><p>Added <code class="code docutils literal notranslate"><span class="pre">progress</span></code> parameter for progress bar</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ctx</strong> (<a class="reference internal" href="api.html#libertem.api.Context" title="libertem.api.Context"><em>libertem.api.Context</em></a>) – </p></li>
+<li><p><strong>dataset</strong> (<a class="reference internal" href="dataset.html#libertem.io.dataset.base.DataSet" title="libertem.io.dataset.base.DataSet"><em>libertem.io.dataset.base.DataSet</em></a>) – dataset to work on</p></li>
+<li><p><strong>roi</strong> (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.19)"><em>numpy.ndarray</em></a>) – Region of interest, see <a class="reference internal" href="../udf.html#udf-roi"><span class="std std-ref">Regions of interest</span></a> for more information.</p></li>
+<li><p><strong>progress</strong> (<a class="reference external" href="https://docs.python.org/3.7/library/functions.html#bool" title="(in Python v3.7)"><em>bool</em></a><em>, </em><em>optional</em>) – Show progress bar. Default is <code class="code docutils literal notranslate"><span class="pre">False</span></code>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><em>pass_results</em> – A dictionary of narrays that contains sum of variances, sum of pixels,
+and number of frames used to compute the above statistic</p></li>
+<li><p><em>To retrieve statistic, using the following commands</em></p></li>
+<li><p><strong>variance</strong> (<code class="code docutils literal notranslate"><span class="pre">pass_results['var']</span></code>)</p></li>
+<li><p><strong>standard deviation</strong> (<em>pass_results[‘std’]</em>)</p></li>
+<li><p><strong>sum of pixels</strong> (<em>pass_results[‘sum’]</em>)</p></li>
+<li><p><strong>mean</strong> (<em>pass_results[‘mean’]</em>)</p></li>
+<li><p><strong>number of frames</strong> (<em>pass_results[‘num_frames’]</em>)</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="libertem.udf.stddev.consolidate_result">
+<code class="sig-prename descclassname">libertem.udf.stddev.</code><code class="sig-name descname">consolidate_result</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">udf_result</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/libertem/udf/stddev.html#consolidate_result"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#libertem.udf.stddev.consolidate_result" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate variance, mean and standard deviation
+from raw UDF results and consolidate the per-tile frame counter
+into a single value.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>udf_result</strong> (<em>Dict</em><em>[</em><a class="reference external" href="https://docs.python.org/3.7/library/stdtypes.html#str" title="(in Python v3.7)"><em>str</em></a><em>, </em><a class="reference internal" href="#libertem.common.buffers.BufferWrapper" title="libertem.common.buffers.BufferWrapper"><em>BufferWrapper</em></a><em>]</em>) – UDF result with keys ‘sum’, ‘varsum’, ‘num_frames’</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>pass_results</strong> – Result dictionary with keys <code class="code docutils literal notranslate"><span class="pre">'sum',</span> <span class="pre">'varsum',</span> <span class="pre">'var',</span> <span class="pre">'std',</span> <span class="pre">'mean'</span></code> as
+<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.19)"><code class="xref py py-class docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a>, and <code class="code docutils literal notranslate"><span class="pre">'num_frames'</span></code> as <code class="code docutils literal notranslate"><span class="pre">int</span></code></p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>Dict[<a class="reference external" href="https://docs.python.org/3.7/library/stdtypes.html#str" title="(in Python v3.7)">str</a>, Union[<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.19)">numpy.ndarray</a>, <a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)">int</a>]]</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="sum-per-frame">
+<span id="sumsig-udf"></span><h3>Sum per frame<a class="headerlink" href="#sum-per-frame" title="Permalink to this headline">¶</a></h3>
+<dl class="py class">
+<dt id="libertem.udf.sumsigudf.SumSigUDF">
+<em class="property">class </em><code class="sig-prename descclassname">libertem.udf.sumsigudf.</code><code class="sig-name descname">SumSigUDF</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/libertem/udf/sumsigudf.html#SumSigUDF"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#libertem.udf.sumsigudf.SumSigUDF" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sum over the signal axes. For each navigation position, the sum of all pixels is calculated.</p>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">udf</span> <span class="o">=</span> <span class="n">SumSigUDF</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">result</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">run_udf</span><span class="p">(</span><span class="n">dataset</span><span class="o">=</span><span class="n">dataset</span><span class="p">,</span> <span class="n">udf</span><span class="o">=</span><span class="n">udf</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="s2">&quot;intensity&quot;</span><span class="p">])</span><span class="o">.</span><span class="n">shape</span>
+<span class="go">(16, 16)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</div>
+<div class="section" id="apply-masks">
+<span id="masks-udf"></span><h3>Apply masks<a class="headerlink" href="#apply-masks" title="Permalink to this headline">¶</a></h3>
+<dl class="py class">
+<dt id="libertem.udf.masks.ApplyMasksUDF">
+<em class="property">class </em><code class="sig-prename descclassname">libertem.udf.masks.</code><code class="sig-name descname">ApplyMasksUDF</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">mask_factories</span></em>, <em class="sig-param"><span class="n">use_torch</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">use_sparse</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">mask_count</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">mask_dtype</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">preferred_dtype</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">backends</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/libertem/udf/masks.html#ApplyMasksUDF"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#libertem.udf.masks.ApplyMasksUDF" title="Permalink to this definition">¶</a></dt>
+<dd><p>Apply masks to signals/frames in the dataset.</p>
+<div class="versionadded">
+<p><span class="versionmodified added">New in version 0.4.0.</span></p>
+</div>
+<dl class="py method">
+<dt id="libertem.udf.masks.ApplyMasksUDF.__init__">
+<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">mask_factories</span></em>, <em class="sig-param"><span class="n">use_torch</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">use_sparse</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">mask_count</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">mask_dtype</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">preferred_dtype</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">backends</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/libertem/udf/masks.html#ApplyMasksUDF.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#libertem.udf.masks.ApplyMasksUDF.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mask_factories</strong> (<em>Union</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>]</em><em>, </em><em>array_like</em><em>]</em><em>, </em><em>Iterable</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>]</em><em>, </em><em>array_like</em><em>]</em><em>]</em><em>]</em>) – Function or list of functions that take no arguments and create masks. The returned
+masks can be
+numpy arrays, scipy.sparse or sparse <a class="reference external" href="https://sparse.pydata.org/">https://sparse.pydata.org/</a> matrices. The mask
+factories should not reference large objects because they can create significant
+overheads when they are pickled and unpickled. Each factory function should, when
+called, return a numpy array with the same shape as frames in the dataset
+(so dataset.shape.sig).</p></li>
+<li><p><strong>use_torch</strong> (<a class="reference external" href="https://docs.python.org/3.7/library/functions.html#bool" title="(in Python v3.7)"><em>bool</em></a><em>, </em><em>optional</em>) – Use pytorch back-end if available. Default True</p></li>
+<li><p><strong>use_sparse</strong> (<em>Union</em><em>[</em><a class="reference external" href="https://docs.python.org/3.7/library/constants.html#None" title="(in Python v3.7)"><em>None</em></a><em>, </em><em>False</em><em>, </em><em>True</em><em>, </em><em>'scipy.sparse'</em><em>, </em><em>'scipy.sparse.csc'</em><em>,                 </em><em>'sparse.pydata'</em><em>]</em><em>, </em><em>optional</em>) – Which sparse back-end to use.
+* None (default): Use sparse matrix multiplication if all factory functions return a                 sparse mask, otherwise convert all masks to dense matrices and use dense matrix                 multiplication
+* True: Convert all masks to sparse matrices and use default sparse back-end.
+* False: Convert all masks to dense matrices.
+* ‘scipy.sparse’: Use scipy.sparse.csr_matrix (default sparse)
+* ‘scipy.sparse.csc’: Use scipy.sparse.csc_matrix
+* ‘sparse.pydata’: Use sparse.pydata COO matrix</p></li>
+<li><p><strong>mask_count</strong> (<a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a><em>, </em><em>optional</em>) – Specify the number of masks if a single factory function is used so that the
+number of masks can be determined without calling the factory function.</p></li>
+<li><p><strong>mask_dtype</strong> (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.dtype.html#numpy.dtype" title="(in NumPy v1.19)"><em>numpy.dtype</em></a><em>, </em><em>optional</em>) – Specify the dtype of the masks so that mask dtype
+can be determined without calling the mask factory functions. This can be used to
+override the mask dtype in the result dtype determination. As an example, setting
+this to np.float32 means that masks of type float64 will not switch the calculation
+and result dtype to float64 or complex128.</p></li>
+<li><p><strong>preferred_dtype</strong> (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.dtype.html#numpy.dtype" title="(in NumPy v1.19)"><em>numpy.dtype</em></a><em>, </em><em>optional</em>) – Let <code class="xref py py-meth docutils literal notranslate"><span class="pre">get_preferred_input_dtype()</span></code> return the specified type instead of the
+default <cite>float32</cite>. This can perform the calculation with integer types if both input
+data and mask data are compatible with this.</p></li>
+<li><p><strong>backends</strong> (<em>Iterable containing strings &quot;numpy&quot; and/or &quot;cupy&quot;</em><em>, or </em><a class="reference external" href="https://docs.python.org/3.7/library/constants.html#None" title="(in Python v3.7)"><em>None</em></a>) – Control which back-ends are used. Default is numpy and cupy</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="libertem.udf.masks.ApplyMasksUDF.get_backends">
+<code class="sig-name descname">get_backends</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/libertem/udf/masks.html#ApplyMasksUDF.get_backends"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#libertem.udf.masks.ApplyMasksUDF.get_backends" title="Permalink to this definition">¶</a></dt>
+<dd><p>Signal which computation back-ends the UDF can use.</p>
+<p><code class="code docutils literal notranslate"><span class="pre">numpy</span></code> is the default CPU-based computation.</p>
+<p><code class="code docutils literal notranslate"><span class="pre">cuda</span></code> is CUDA-based computation without CuPy.</p>
+<p><code class="code docutils literal notranslate"><span class="pre">cupy</span></code> is CUDA-based computation through CuPy.</p>
+<div class="versionadded">
+<p><span class="versionmodified added">New in version 0.6.0.</span></p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><strong>backend</strong> – An iterable containing possible values <code class="code docutils literal notranslate"><span class="pre">numpy</span></code> (default), <code class="code docutils literal notranslate"><span class="pre">'cuda'</span></code> and
+<code class="code docutils literal notranslate"><span class="pre">cupy</span></code></p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>Iterable[<a class="reference external" href="https://docs.python.org/3.7/library/stdtypes.html#str" title="(in Python v3.7)">str</a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="load-data">
+<span id="pick-udf"></span><h3>Load data<a class="headerlink" href="#load-data" title="Permalink to this headline">¶</a></h3>
+<dl class="py class">
+<dt id="libertem.udf.raw.PickUDF">
+<em class="property">class </em><code class="sig-prename descclassname">libertem.udf.raw.</code><code class="sig-name descname">PickUDF</code><a class="reference internal" href="../_modules/libertem/udf/raw.html#PickUDF"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#libertem.udf.raw.PickUDF" title="Permalink to this definition">¶</a></dt>
+<dd><p>Load raw data from ROI</p>
+<p>This UDF is meant for frame picking with a very small ROI, usually a single frame.</p>
+<div class="versionadded">
+<p><span class="versionmodified added">New in version 0.4.0.</span></p>
+</div>
+</dd></dl>
+
+</div>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<p class="logo">
+  <a href="../index.html">
+    <img class="logo" src="../_static/logo.png" alt="Logo"/>
+    
+  </a>
+</p>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usage.html">GUI usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../concepts.html">Concepts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api.html">Python API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../formats.html">Loading data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../udf.html">User-defined functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../packages.html">Package overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sample_datasets.html">Sample Datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../applications.html">Applications</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../architecture.html">Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../performance.html">Performance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../debugging.html">Debugging</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Reference</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="api.html">LiberTEM Context API</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">UDF API reference</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dataset.html">Data Set API</a></li>
+<li class="toctree-l2"><a class="reference internal" href="application.html">Application-specific API</a></li>
+<li class="toctree-l2"><a class="reference internal" href="masks.html">Mask creation and manipulation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="internals.html">Internal API</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dask.html">Dask API</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cluster-ds.html">Cluster data set</a></li>
+<li class="toctree-l2"><a class="reference internal" href="caching.html">Distributed caching layer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="corrections.html">Corrections</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#indices-and-tables">Indices and tables</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../changelog.html">Changelog</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tips.html">Tips and tricks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../why_python.html">Why Python?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../gsoc.html">GSoC 2020 ideas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../contributing.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../authorship.html">Authorship policy</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../citing.html">Citing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../acknowledgments.html">Acknowledgments</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../dev/how-io-works.html">How does I/O work in LiberTEM?</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Reference</a><ul>
+      <li>Previous: <a href="api.html" title="previous chapter">LiberTEM Context API</a></li>
+      <li>Next: <a href="dataset.html" title="next chapter">Data Set API</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2018, LiberTEM Authors.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.1.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/reference/udf.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
